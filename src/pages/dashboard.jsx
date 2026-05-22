@@ -15,6 +15,12 @@ export default function ProductPage() {
       images: [],   // ✅ ADD THIS
     sizes: [{ label: "", price: "" }],
     faqs: [{ question: "", answer: "" }],
+    // 🔥 ADD THESE
+  metaTitle: "",
+  metaDescription: "",
+  metaKeywords: "",
+  productTags: "",
+  seoUrl: ""
   });
 const handleImageChange = (e) => {
   setForm({
@@ -78,6 +84,12 @@ const handleImageChange = (e) => {
     formData.append("description", form.description);
     formData.append("sizes", JSON.stringify(form.sizes));
     formData.append("faqs", JSON.stringify(form.faqs));
+    // 🔥 ADD THESE SEO FIELDS
+formData.append("metaTitle", form.metaTitle);
+formData.append("metaDescription", form.metaDescription);
+formData.append("metaKeywords", form.metaKeywords);
+formData.append("productTags", form.productTags);
+formData.append("seoUrl", form.seoUrl);
   form.images.forEach((file) => {
     formData.append("images", file);
   });
@@ -97,6 +109,11 @@ const handleImageChange = (e) => {
       description: "",
       sizes: [{ label: "", price: "" }],
       faqs: [{ question: "", answer: "" }],
+      metaTitle: "",
+  metaDescription: "",
+  metaKeywords: "",
+  productTags: "",
+  seoUrl: ""
     });
 
     setEditId(null);
@@ -115,6 +132,12 @@ const handleImageChange = (e) => {
 
       sizes: p.sizes || [{ label: "", price: "" }],
       faqs: p.faqs || [{ question: "", answer: "" }],
+      // 🔥 ADD THESE
+    metaTitle: p.metaTitle || "",
+    metaDescription: p.metaDescription || "",
+    metaKeywords: p.metaKeywords || "",
+    productTags: p.productTags || "",
+    seoUrl: p.seoUrl || ""
     });
 
     setEditId(p._id);
@@ -267,7 +290,71 @@ const handleImageChange = (e) => {
               + Add FAQ
             </button>
 
-            <button className="bg-green-600 text-white px-4 py-2 w-full">
+          
+            {/* ================= SEO FIELDS SECTION ================= */}
+<div className="border-t pt-4 mt-4 space-y-4">
+  <h3 className="font-bold text-lg text-gray-700">SEO Settings</h3>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div className="flex flex-col">
+      <label className="text-sm font-semibold mb-1">Meta Tag Title <span className="text-red-500">*</span></label>
+      <input
+        name="metaTitle"
+        value={form.metaTitle}
+        onChange={handleChange}
+        placeholder="Meta Tag Title"
+        className="border p-2 rounded"
+      />
+    </div>
+
+    <div className="flex flex-col">
+      <label className="text-sm font-semibold mb-1">SEO URL</label>
+      <input
+        name="seoUrl"
+        value={form.seoUrl}
+        onChange={handleChange}
+        placeholder="the-herbal-product"
+        className="border p-2 rounded"
+      />
+    </div>
+  </div>
+
+  <div className="flex flex-col">
+    <label className="text-sm font-semibold mb-1">Meta Tag Description</label>
+    <textarea
+      name="metaDescription"
+      value={form.metaDescription}
+      onChange={handleChange}
+      placeholder="Meta Tag Description"
+      className="border p-2 rounded w-full h-20"
+    />
+  </div>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div className="flex flex-col">
+      <label className="text-sm font-semibold mb-1">Meta Tag Keywords</label>
+      <input
+        name="metaKeywords"
+        value={form.metaKeywords}
+        onChange={handleChange}
+        placeholder="keyword1, keyword2"
+        className="border p-2 rounded"
+      />
+    </div>
+
+    <div className="flex flex-col">
+      <label className="text-sm font-semibold mb-1">Product Tags</label>
+      <input
+        name="productTags"
+        value={form.productTags}
+        onChange={handleChange}
+        placeholder="tag1, tag2"
+        className="border p-2 rounded"
+      />
+    </div>
+  </div>
+</div>
+  <button className="bg-green-600 text-white px-4 py-2 w-full">
               {editId ? "Update" : "Create"}
             </button>
           </form>
@@ -307,12 +394,12 @@ const handleImageChange = (e) => {
 </td>
                 <td className="border p-2">{p.name}</td>
                 <td className="border p-2">{p.category}</td>
-                <td className="border p-2">₹{p.basePrice}</td>
+                <td className="border p-2">{p.basePrice}</td>
 
                 <td className="border p-2">
                   {p.sizes?.map((s, i) => (
                     <div key={i}>
-                      {s.label} - ₹{s.price}
+                      {s.label} - {s.price}
                     </div>
                   ))}
                 </td>
