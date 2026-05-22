@@ -1,0 +1,12 @@
+@import "tailwindcss";
+/* Your custom styles below */
+:root {
+  --bg: #ffffff;
+  --text: #101725; /* dark gray instead of white */
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  margin: 0;
+}
