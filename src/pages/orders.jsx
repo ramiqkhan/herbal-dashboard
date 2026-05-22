@@ -73,7 +73,9 @@ export default function OrdersPage() {
               {orders.map((o) => (
                 <tr key={o._id} className="text-center">
 
-                  <td className="border p-2 text-xs">{o._id}</td>
+                <td className="border p-2 text-xs font-mono font-semibold text-gray-700">
+  {o.trackingNumber || o.orderNumber || "N/A"}
+</td>
 
                   <td className="border p-2">
                     {o.shippingInfo?.fullName}
