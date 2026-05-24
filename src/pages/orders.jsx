@@ -82,7 +82,17 @@ export default function OrdersPage() {
                   </td>
 
                   <td className="border p-2">
-                    {o.shippingInfo?.phone}
+                 {/* Primary Phone Number */}
+  <div className="font-medium text-gray-800">
+    {o.shippingInfo?.phone || "N/A"}
+  </div>
+  
+  {/* 🛠️ Optional/Alternative Phone Check */}
+  {o.shippingInfo?.optionalphone && (
+    <div className="text-xs text-gray-400 mt-1 font-mono" title="Alternative Phone">
+      Alt: {o.shippingInfo.optionalphone}
+    </div>
+  )}
                   </td>
 
                   <td className="border p-2">

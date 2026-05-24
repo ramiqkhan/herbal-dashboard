@@ -12,10 +12,11 @@ export default function ProductPage() {
   const [form, setForm] = useState({
     name: "",
     category: "", 
-    basePrice: "",
+    originalPrice: "", // ❌ Main Product Cut Price
+    basePrice: "",     // 💰 Main Product Selling Price
     description: "",
     images: [],   
-    sizes: [{ label: "", price: "" }],
+    sizes: [{ label: "", originalPrice: "", price: "" }], // 🛠️ Dynamic Variation Pair Updates
     faqs: [{ question: "", answer: "" }],
     metaTitle: "",
     metaDescription: "",
@@ -92,7 +93,7 @@ export default function ProductPage() {
     }
   };
 
-  // ================= SIZE =================
+  // ================= SIZE VARIATIONS CONTROL =================
   const handleSizeChange = (i, field, value) => {
     const newSizes = [...form.sizes];
     newSizes[i][field] = value;
@@ -102,7 +103,7 @@ export default function ProductPage() {
   const addSize = () => {
     setForm({
       ...form,
-      sizes: [...form.sizes, { label: "", price: "" }],
+      sizes: [...form.sizes, { label: "", originalPrice: "", price: "" }],
     });
   };
 
@@ -125,10 +126,11 @@ export default function ProductPage() {
     setForm({
       name: "",
       category: dbCategories.length > 0 ? dbCategories[0]._id : "",
+      originalPrice: "",
       basePrice: "",
       description: "",
       images: [],
-      sizes: [{ label: "", price: "" }],
+      sizes: [{ label: "", originalPrice: "", price: "" }],
       faqs: [{ question: "", answer: "" }],
       metaTitle: "",
       metaDescription: "",
@@ -145,6 +147,7 @@ export default function ProductPage() {
 
     const formData = new FormData();
     formData.append("name", form.name);
+    formData.append("originalPrice", form.originalPrice); // ❌ Appending Main Cut Price
     formData.append("basePrice", form.basePrice);
     formData.append("description", form.description);
     formData.append("sizes", JSON.stringify(form.sizes));
@@ -219,10 +222,11 @@ export default function ProductPage() {
     setForm({
       name: p.name || "",
       category: selectedCategoryId, 
+      originalPrice: p.originalPrice || "", // Loading to field state
       basePrice: p.basePrice || "",
       description: p.description || "",
       images: [],   
-      sizes: p.sizes && p.sizes.length > 0 ? p.sizes : [{ label: "", price: "" }],
+      sizes: p.sizes && p.sizes.length > 0 ? p.sizes : [{ label: "", originalPrice: "", price: "" }],
       faqs: p.faqs && p.faqs.length > 0 ? p.faqs : [{ question: "", answer: "" }],
       metaTitle: p.metaTitle || "",
       metaDescription: p.metaDescription || "",
@@ -272,8 +276,8 @@ export default function ProductPage() {
           </h2> 
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* TOP ROW */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* PRICING & CLASSIFICATION ROW */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="flex flex-col">
                 <label className="text-sm font-medium mb-1 text-gray-600">Product Name</label>
                 <input
@@ -308,12 +312,23 @@ export default function ProductPage() {
               </div>
 
               <div className="flex flex-col">
-                <label className="text-sm font-medium mb-1 text-gray-600">Base Price</label>
+                <label className="text-sm font-medium mb-1 text-gray-600">Main Original Price (Cut Price)</label>
+                <input
+                  name="originalPrice"
+                  value={form.originalPrice}
+                  onChange={handleChange}
+                  placeholder="e.g. 1500"
+                  className="border border-gray-300 p-2 text-sm rounded focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-sm font-medium mb-1 text-gray-600">Main Selling Price (Base Price)</label>
                 <input
                   name="basePrice"
                   value={form.basePrice}
                   onChange={handleChange}
-                  placeholder="Base Price"
+                  placeholder="e.g. 1200"
                   className="border border-gray-300 p-2 text-sm rounded focus:outline-none focus:border-blue-500"
                 />
               </div>
@@ -350,31 +365,46 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* SIZES */}
+            {/* SIZES & LIQUID VOLUME ML DYNAMIC VARIATIONS */}
             <div className="space-y-2 border-t pt-4 border-gray-100">
-              <h3 className="font-bold text-sm text-gray-700">Sizes & Variations</h3>
+              <h3 className="font-bold text-sm text-gray-700">ML / Size Variations Pricing</h3>
               {form.sizes.map((s, i) => (
-                <div key={i} className="grid grid-cols-2 gap-4">
-                  <input
-                    value={s.label}
-                    onChange={(e) => handleSizeChange(i, "label", e.target.value)}
-                    placeholder="Label (e.g., 100ml, 50g)"
-                    className="border border-gray-300 p-2 text-sm rounded focus:outline-none"
-                  />
-                  <input
-                    value={s.price}
-                    onChange={(e) => handleSizeChange(i, "price", e.target.value)}
-                    placeholder="Price"
-                    className="border border-gray-300 p-2 text-sm rounded focus:outline-none"
-                  />
+                <div key={i} className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-3 rounded border border-gray-200">
+                  <div className="flex flex-col">
+                    <label className="text-xs font-semibold text-gray-500 mb-1">Volume/Size</label>
+                    <input
+                      value={s.label}
+                      onChange={(e) => handleSizeChange(i, "label", e.target.value)}
+                      placeholder="e.g., 100ml, 250ml, 50g"
+                      className="border border-gray-300 p-2 text-sm rounded bg-white focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-xs font-semibold text-gray-500 mb-1">Cut Price (Original)</label>
+                    <input
+                      value={s.originalPrice || ""}
+                      onChange={(e) => handleSizeChange(i, "originalPrice", e.target.value)}
+                      placeholder="e.g., 1200"
+                      className="border border-gray-300 p-2 text-sm rounded bg-white focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-xs font-semibold text-gray-500 mb-1">Selling Price (Actual)</label>
+                    <input
+                      value={s.price}
+                      onChange={(e) => handleSizeChange(i, "price", e.target.value)}
+                      placeholder="e.g., 950"
+                      className="border border-gray-300 p-2 text-sm rounded bg-white focus:outline-none"
+                    />
+                  </div>
                 </div>
               ))}
               <button 
                 type="button" 
                 onClick={addSize}
-                className="text-xs text-blue-600 hover:underline font-semibold block"
+                className="text-xs text-blue-600 hover:underline font-semibold block pt-1"
               >
-                + Add Size
+                + Add Another Volume Size Option
               </button>
             </div>
 
@@ -485,8 +515,8 @@ export default function ProductPage() {
                 <th className="p-3 border-r text-center w-24">Images</th>
                 <th className="p-3 border-r">Name</th>
                 <th className="p-3 border-r w-32">Category</th>
-                <th className="p-3 border-r w-24">Base Price</th>
-                <th className="p-3 border-r">Sizes</th>
+                <th className="p-3 border-r w-36">Base Pricing (Cut / Sell)</th>
+                <th className="p-3 border-r">Sizes & ML Setup</th>
                 <th className="p-3 text-center w-40">Actions</th>
               </tr>
             </thead>
@@ -519,13 +549,20 @@ export default function ProductPage() {
                         ? p.category?.name 
                         : (dbCategories.find(c => c._id === p.category)?.name || "Uncategorized")}
                     </td>
-                    <td className="p-3 border-r font-mono text-gray-700">{p.basePrice || "—"}</td>
-                    <td className="p-3 text-xs text-gray-500 border-r space-y-0.5">
-                      {p.sizes?.map((s, i) => (
-                        <div key={i} className="bg-gray-100 inline-block px-1.5 py-0.5 rounded mr-1 mb-1 text-gray-700 font-medium">
-                          {s.label} - {s.price}
-                        </div>
-                      ))}
+                    <td className="p-3 border-r text-gray-700 font-mono">
+                      {p.originalPrice ? <span className="line-through text-gray-400 mr-2">Rs.{p.originalPrice}</span> : null}
+                      <span className="font-bold text-green-700">Rs.{p.basePrice || "0"}</span>
+                    </td>
+                    <td className="p-3 text-xs text-gray-500 border-r">
+                      <div className="flex flex-wrap gap-1">
+                        {p.sizes?.map((s, i) => (
+                          <div key={i} className="bg-gray-100 px-2 py-1 rounded text-gray-700 font-medium border border-gray-200">
+                            <span className="font-bold text-blue-700">{s.label}:</span>{" "}
+                            {s.originalPrice ? <span className="line-through text-gray-400 mr-1">Rs.{s.originalPrice}</span> : null}
+                            <span className="text-gray-900 font-semibold">Rs.{s.price}</span>
+                          </div>
+                        ))}
+                      </div>
                     </td>
                     <td className="p-3 text-center space-x-2 whitespace-nowrap">
                       <button
