@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 
-const BASE_URL = "http://localhost:5000/api/products";
-const CATEGORIES_URL = "http://localhost:5000/api/categories"; 
+// ✅ UPDATED: Local endpoints ko secure production links se replace kar diya hai
+const BASE_URL = "https://herbal-backend-chi.vercel.app/api/products";
+const CATEGORIES_URL = "https://herbal-backend-chi.vercel.app/api/categories"; 
 
 export default function ProductPage() {
   const [products, setProducts] = useState([]);
@@ -12,11 +13,11 @@ export default function ProductPage() {
   const [form, setForm] = useState({
     name: "",
     category: "", 
-    originalPrice: "", // ❌ Main Product Cut Price
-    basePrice: "",     // 💰 Main Product Selling Price
+    originalPrice: "", // Main Product Cut Price
+    basePrice: "",      // Main Product Selling Price
     description: "",
     images: [],   
-    sizes: [{ label: "", originalPrice: "", price: "" }], // 🛠️ Dynamic Variation Pair Updates
+    sizes: [{ label: "", originalPrice: "", price: "" }], 
     faqs: [{ question: "", answer: "" }],
     metaTitle: "",
     metaDescription: "",
@@ -32,7 +33,7 @@ export default function ProductPage() {
     });
   };
 
-  // ================= FETCH PRODUCTS =================
+  // ================= FETCH PRODUCTS (LIVE FROM VERCEL) =================
   const fetchProducts = async () => {
     try {
       const res = await fetch(BASE_URL);
@@ -45,11 +46,11 @@ export default function ProductPage() {
         setProducts(data.data);
       }
     } catch (err) {
-      console.error("Products fetch karne me error:", err);
+      console.error("Live products fetch karne me error:", err);
     }
   };
 
-  // ================= FETCH REAL CATEGORIES =================
+  // ================= FETCH REAL CATEGORIES (LIVE FROM VERCEL) =================
   const fetchDbCategories = async () => {
     try {
       const res = await fetch(CATEGORIES_URL);
@@ -70,7 +71,7 @@ export default function ProductPage() {
         setForm(prev => ({ ...prev, category: fetchedCategories[0]._id }));
       }
     } catch (err) {
-      console.error("Categories fetch karne me error:", err);
+      console.error("Live categories fetch karne me error:", err);
     }
   };
 
@@ -141,13 +142,13 @@ export default function ProductPage() {
     setEditId(null);
   };
 
-  // ================= SUBMIT (CREATE / UPDATE) =================
+  // ================= SUBMIT (CREATE / UPDATE ON LIVE SERVER) =================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const formData = new FormData();
     formData.append("name", form.name);
-    formData.append("originalPrice", form.originalPrice); // ❌ Appending Main Cut Price
+    formData.append("originalPrice", form.originalPrice); 
     formData.append("basePrice", form.basePrice);
     formData.append("description", form.description);
     formData.append("sizes", JSON.stringify(form.sizes));
@@ -201,7 +202,7 @@ export default function ProductPage() {
       setShowForm(false);
       fetchProducts();
     } catch (err) {
-      console.error("Save error:", err);
+      console.error("Save execution fail:", err);
     }
   };
 
@@ -222,7 +223,7 @@ export default function ProductPage() {
     setForm({
       name: p.name || "",
       category: selectedCategoryId, 
-      originalPrice: p.originalPrice || "", // Loading to field state
+      originalPrice: p.originalPrice || "", 
       basePrice: p.basePrice || "",
       description: p.description || "",
       images: [],   
@@ -239,12 +240,16 @@ export default function ProductPage() {
     setShowForm(true); 
   };
 
-  // ================= DELETE =================
+  // ================= DELETE FROM LIVE SERVER =================
   const handleDelete = async (id) => {
     if(window.confirm("Kiya aap is product ko delete karna chahte hain?")) {
       try {
-        await fetch(`${BASE_URL}/${id}`, { method: "DELETE" });
-        fetchProducts();
+        const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE" });
+        if(res.ok) {
+          fetchProducts();
+        } else {
+          alert("🚨 Delete nahi ho saka backend se.");
+        }
       } catch (err) {
         console.error("Delete karne me error:", err);
       }
@@ -292,23 +297,31 @@ export default function ProductPage() {
 
               <div className="flex flex-col">
                 <label className="text-sm font-medium mb-1 text-gray-600">Category</label>
-                <select
-                  name="category"
-                  value={form.category}
-                  onChange={handleChange}
-                  className="border border-gray-300 p-2 text-sm rounded bg-white focus:outline-none focus:border-blue-500"
-                  required
-                >
-                  {dbCategories.length === 0 ? (
-                    <option value="" disabled>Pehle category add karein...</option>
-                  ) : (
-                    dbCategories.map((cat) => (
-                      <option key={cat._id} value={cat._id}>
-                        {cat.name}
-                      </option>
-                    ))
-                  )}
-                </select>
+      <select
+  name="category"
+  value={form.category}
+  onChange={handleChange}
+  className="border border-gray-300 p-2 text-sm rounded bg-white focus:outline-none focus:border-blue-500 w-full"
+  required
+>
+  {/* 1. Default Placeholder Option (Hamesha pehle dikhega jab tak user select na kare) */}
+  <option value="" disabled>
+    Select Category
+  </option>
+
+  {/* 2. Dynamic Categories Loading from Database */}
+  {dbCategories.length === 0 ? (
+    <option value="" disabled>
+      Pehle category add karein...
+    </option>
+  ) : (
+    dbCategories.map((cat) => (
+      <option key={cat._id} value={cat._id}>
+        {cat.name}
+      </option>
+    ))
+  )}
+</select>
               </div>
 
               <div className="flex flex-col">
@@ -365,7 +378,7 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* SIZES & LIQUID VOLUME ML DYNAMIC VARIATIONS */}
+            {/* SIZES VARIATIONS */}
             <div className="space-y-2 border-t pt-4 border-gray-100">
               <h3 className="font-bold text-sm text-gray-700">ML / Size Variations Pricing</h3>
               {form.sizes.map((s, i) => (
@@ -375,7 +388,7 @@ export default function ProductPage() {
                     <input
                       value={s.label}
                       onChange={(e) => handleSizeChange(i, "label", e.target.value)}
-                      placeholder="e.g., 100ml, 250ml, 50g"
+                      placeholder="e.g., 100ml, 250ml"
                       className="border border-gray-300 p-2 text-sm rounded bg-white focus:outline-none"
                     />
                   </div>
@@ -525,7 +538,7 @@ export default function ProductPage() {
               {products.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="text-center p-8 text-gray-400 font-medium bg-gray-50/50">
-                    Koi products nahi mile. Naya product add karein!
+                    Koi products nahi mile. Live database se check karein ya naya product add karein!
                   </td>
                 </tr>
               ) : (

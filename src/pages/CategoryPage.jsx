@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiLayers } from "react-icons/fi";
 
-const BASE_URL = "http://localhost:5000/api/categories";
+const BASE_URL = "https://herbal-backend-chi.vercel.app/api/categories";
 
 export default function CategoryManagement() {
   // States
