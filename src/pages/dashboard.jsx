@@ -17,7 +17,8 @@ export default function ProductPage() {
     basePrice: "",      // Main Product Selling Price
     description: "",
     images: [],   
-    sizes: [{ label: "", originalPrice: "", price: "" }], 
+    // ⚡ UPDATED LINE: imageFile aur imageUrl add kiya
+    sizes: [{ label: "", originalPrice: "", price: "", imageFile: null, imageUrl: "" }],
     faqs: [{ question: "", answer: "" }],
     metaTitle: "",
     metaDescription: "",
@@ -104,8 +105,15 @@ export default function ProductPage() {
   const addSize = () => {
     setForm({
       ...form,
-      sizes: [...form.sizes, { label: "", originalPrice: "", price: "" }],
+      sizes: [...form.sizes, { label: "", originalPrice: "", price: "", imageFile: null, imageUrl: "" }],
     });
+  };
+
+  // handleSizeChange ke bilkul niche yeh function add kiya:
+  const handleSizeImageChange = (i, file) => {
+    const newSizes = [...form.sizes];
+    newSizes[i]["imageFile"] = file; // State mai binary file ko temporary store karega
+    setForm({ ...form, sizes: newSizes });
   };
 
   // ================= FAQ =================
@@ -131,7 +139,7 @@ export default function ProductPage() {
       basePrice: "",
       description: "",
       images: [],
-      sizes: [{ label: "", originalPrice: "", price: "" }],
+      sizes: [{ label: "", originalPrice: "", price: "", imageFile: null, imageUrl: "" }],
       faqs: [{ question: "", answer: "" }],
       metaTitle: "",
       metaDescription: "",
@@ -151,7 +159,7 @@ export default function ProductPage() {
     formData.append("originalPrice", form.originalPrice); 
     formData.append("basePrice", form.basePrice);
     formData.append("description", form.description);
-    formData.append("sizes", JSON.stringify(form.sizes));
+    
     formData.append("faqs", JSON.stringify(form.faqs));
     
     formData.append("metaTitle", form.metaTitle);
@@ -174,11 +182,27 @@ export default function ProductPage() {
 
     formData.append("category", safeCategoryId); 
 
+    // 1. Base Main Product Images Control
     if (form.images && form.images.length > 0) {
       form.images.forEach((file) => {
         formData.append("images", file);
       });
     }
+
+    // 2. ✅ Variation Sizes Text + Dynamic Images Separation Loop
+    const sizesCleanData = form.sizes.map((s, index) => {
+      if (s.imageFile) {
+        formData.append(`size_image_${index}`, s.imageFile);
+      }
+      return {
+        label: s.label,
+        originalPrice: s.originalPrice,
+        price: s.price,
+        image: s.imageUrl 
+      };
+    });
+
+    formData.append("sizes", JSON.stringify(sizesCleanData));
 
     const method = editId ? "PUT" : "POST";
     const url = editId ? `${BASE_URL}/${editId}` : BASE_URL;
@@ -208,53 +232,74 @@ export default function ProductPage() {
 
   // ================= EDIT FUNCTION =================
   const handleEdit = (p) => {
-    let selectedCategoryId = "";
-    
-    if (p.category) {
-      if (typeof p.category === "object" && p.category._id) {
-        selectedCategoryId = p.category._id; 
-      } else {
-        selectedCategoryId = p.category; 
-      }
+  let selectedCategoryId = "";
+  
+  if (p.category) {
+    if (typeof p.category === "object" && p.category._id) {
+      selectedCategoryId = p.category._id; 
     } else {
-      selectedCategoryId = dbCategories.length > 0 ? dbCategories[0]._id : "";
+      selectedCategoryId = p.category; 
     }
+  } else {
+    selectedCategoryId = dbCategories.length > 0 ? dbCategories[0]._id : "";
+  }
 
-    setForm({
-      name: p.name || "",
-      category: selectedCategoryId, 
-      originalPrice: p.originalPrice || "", 
-      basePrice: p.basePrice || "",
-      description: p.description || "",
-      images: [],   
-      sizes: p.sizes && p.sizes.length > 0 ? p.sizes : [{ label: "", originalPrice: "", price: "" }],
-      faqs: p.faqs && p.faqs.length > 0 ? p.faqs : [{ question: "", answer: "" }],
-      metaTitle: p.metaTitle || "",
-      metaDescription: p.metaDescription || "",
-      metaKeywords: p.metaKeywords || "",
-      productTags: p.productTags || "",
-      seoUrl: p.seoUrl || ""
-    });
+  setForm({
+    name: p.name || "",
+    category: selectedCategoryId, 
+    originalPrice: p.originalPrice || "", 
+    basePrice: p.basePrice || "",
+    description: p.description || "",
+    images: [],   
+    // ✅ FIXED: s.images array ko map kar raha hai edit mode ke liye
+    sizes: p.sizes && p.sizes.length > 0 
+      ? p.sizes.map(s => ({
+          label: s.label || "",
+          originalPrice: s.originalPrice || "",
+          price: s.price || "",
+          imageFile: null,      
+          images: s.images || [],
+          imageUrl: s.images && s.images.length > 0 ? s.images[0] : "" 
+        }))
+      : [{ label: "", originalPrice: "", price: "", imageFile: null, images: [], imageUrl: "" }],
+    faqs: p.faqs && p.faqs.length > 0 ? p.faqs : [{ question: "", answer: "" }],
+    metaTitle: p.metaTitle || "",
+    metaDescription: p.metaDescription || "",
+    metaKeywords: p.metaKeywords || "",
+    productTags: p.productTags || "",
+    seoUrl: p.seoUrl || ""
+  });
 
-    setEditId(p._id);
-    setShowForm(true); 
-  };
+  setEditId(p._id);
+  setShowForm(true); 
+};
 
   // ================= DELETE FROM LIVE SERVER =================
-  const handleDelete = async (id) => {
-    if(window.confirm("Kiya aap is product ko delete karna chahte hain?")) {
-      try {
-        const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE" });
-        if(res.ok) {
-          fetchProducts();
-        } else {
-          alert("🚨 Delete nahi ho saka backend se.");
+const handleDelete = async (id) => {
+  if (window.confirm("Kiya aap is product ko delete karna chahte hain?")) {
+    try {
+      const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE" });
+
+      if (res.ok) {
+        alert("🎉 Product successfully delete ho gaya!");
+        
+        // Safe check: Agar deleted product hi edit ho raha tha, toh form reset kardo
+        if (editId === id) {
+          resetFormState();
+          setShowForm(false);
         }
-      } catch (err) {
-        console.error("Delete karne me error:", err);
+        
+        fetchProducts(); // Table refresh karne ke liye
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(`🚨 Delete nahi ho saka: ${errData.message || "Backend issues"}`);
       }
+    } catch (err) {
+      console.error("Delete karne me error:", err);
+      alert("🚨 Server se connect karne mein masla aa raha hai.");
     }
-  };
+  }
+};
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -297,31 +342,22 @@ export default function ProductPage() {
 
               <div className="flex flex-col">
                 <label className="text-sm font-medium mb-1 text-gray-600">Category</label>
-      <select
-  name="category"
-  value={form.category}
-  onChange={handleChange}
-  className="border border-gray-300 p-2 text-sm rounded bg-white focus:outline-none focus:border-blue-500 w-full"
-  required
->
-  {/* 1. Default Placeholder Option (Hamesha pehle dikhega jab tak user select na kare) */}
-  <option value="" disabled>
-    Select Category
-  </option>
-
-  {/* 2. Dynamic Categories Loading from Database */}
-  {dbCategories.length === 0 ? (
-    <option value="" disabled>
-      Pehle category add karein...
-    </option>
-  ) : (
-    dbCategories.map((cat) => (
-      <option key={cat._id} value={cat._id}>
-        {cat.name}
-      </option>
-    ))
-  )}
-</select>
+                <select
+                  name="category"
+                  value={form.category}
+                  onChange={handleChange}
+                  className="border border-gray-300 p-2 text-sm rounded bg-white focus:outline-none focus:border-blue-500 w-full"
+                  required
+                >
+                  <option value="" disabled>Select Category</option>
+                  {dbCategories.length === 0 ? (
+                    <option value="" disabled>Pehle category add karein...</option>
+                  ) : (
+                    dbCategories.map((cat) => (
+                      <option key={cat._id} value={cat._id}>{cat.name}</option>
+                    ))
+                  )}
+                </select>
               </div>
 
               <div className="flex flex-col">
@@ -382,8 +418,9 @@ export default function ProductPage() {
             <div className="space-y-2 border-t pt-4 border-gray-100">
               <h3 className="font-bold text-sm text-gray-700">ML / Size Variations Pricing</h3>
               {form.sizes.map((s, i) => (
-                <div key={i} className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-3 rounded border border-gray-200">
-                  <div className="flex flex-col">
+                <div key={i} className="grid grid-cols-1 md:grid-cols-12 gap-4 bg-gray-50 p-3 rounded border border-gray-200 items-end">
+                  
+                  <div className="flex flex-col md:col-span-3">
                     <label className="text-xs font-semibold text-gray-500 mb-1">Volume/Size</label>
                     <input
                       value={s.label}
@@ -392,7 +429,8 @@ export default function ProductPage() {
                       className="border border-gray-300 p-2 text-sm rounded bg-white focus:outline-none"
                     />
                   </div>
-                  <div className="flex flex-col">
+
+                  <div className="flex flex-col md:col-span-2">
                     <label className="text-xs font-semibold text-gray-500 mb-1">Cut Price (Original)</label>
                     <input
                       value={s.originalPrice || ""}
@@ -401,7 +439,8 @@ export default function ProductPage() {
                       className="border border-gray-300 p-2 text-sm rounded bg-white focus:outline-none"
                     />
                   </div>
-                  <div className="flex flex-col">
+
+                  <div className="flex flex-col md:col-span-2">
                     <label className="text-xs font-semibold text-gray-500 mb-1">Selling Price (Actual)</label>
                     <input
                       value={s.price}
@@ -410,6 +449,52 @@ export default function ProductPage() {
                       className="border border-gray-300 p-2 text-sm rounded bg-white focus:outline-none"
                     />
                   </div>
+
+                  {/* Variation Photo Input Block */}
+                  <div className="flex flex-col md:col-span-3">
+                    <label className="text-xs font-semibold text-gray-500 mb-1">Variation Photo</label>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={(e) => handleSizeImageChange(i, e.target.files[0])} 
+                      className="border border-gray-300 p-1.5 text-xs rounded bg-white focus:outline-none w-full file:mr-2 file:py-0.5 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer" 
+                    />
+                    {s.imageUrl && !s.imageFile && (
+                      <p className="text-[10px] text-green-600 mt-1 truncate font-medium" title={s.imageUrl}>
+                        Saved: {s.imageUrl.split('/').pop()}
+                      </p>
+                    )}
+                    {s.imageFile && (
+                      <p className="text-[10px] text-blue-600 mt-1 truncate font-medium" title={s.imageFile.name}>
+                        Selected: {s.imageFile.name}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* ⚡ LIVE IMAGE PREVIEW CONTAINER BLOCK */}
+                  <div className="flex items-center justify-center md:col-span-2 h-14 bg-white border border-gray-200 rounded p-1 shadow-inner">
+                    {s.imageFile ? (
+                      // Agar user ne system se abhi fresh image select ki ho
+                      <img 
+                        src={URL.createObjectURL(s.imageFile)} 
+                        alt="Preview" 
+                        className="h-full w-full object-contain rounded"
+                      />
+                    ) : s.imageUrl ? (
+                      // Agar edit mode mai backend se purani link aayi ho
+                      <img 
+                        src={s.imageUrl} 
+                        alt="Current" 
+                        className="h-full w-full object-contain rounded"
+                      />
+                    ) : (
+                      // Agar koi image select nahi huiwi
+                      <span className="text-[10px] text-gray-400 font-semibold italic text-center leading-none">
+                        No Image
+                      </span>
+                    )}
+                  </div>
+
                 </div>
               ))}
               <button 
@@ -533,68 +618,103 @@ export default function ProductPage() {
                 <th className="p-3 text-center w-40">Actions</th>
               </tr>
             </thead>
+<tbody className="divide-y divide-gray-200">
+  {products.length === 0 ? (
+    <tr>
+      <td colSpan="6" className="text-center p-8 text-gray-400 font-medium bg-gray-50/50">
+        Koi products nahi mile. Live database se check karein ya naya product add karein!
+      </td>
+    </tr>
+  ) : (
+    products.map((p) => (
+      <tr key={p._id} className="hover:bg-gray-50/80 transition">
+        {/* MAIN PRODUCT IMAGES */}
+        <td className="p-3 border-r">
+          <div className="flex gap-1 flex-wrap justify-center">
+            {p.images?.map((img, i) => (
+              <img
+                key={i}
+                src={img}
+                alt=""
+                className="w-10 h-10 object-cover rounded border border-gray-100 shadow-sm"
+              />
+            ))}
+          </div>
+        </td>
 
-            <tbody className="divide-y divide-gray-200">
-              {products.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="text-center p-8 text-gray-400 font-medium bg-gray-50/50">
-                    Koi products nahi mile. Live database se check karein ya naya product add karein!
-                  </td>
-                </tr>
-              ) : (
-                products.map((p) => (
-                  <tr key={p._id} className="hover:bg-gray-50/80 transition">
-                    <td className="p-3 border-r">
-                      <div className="flex gap-1 flex-wrap justify-center">
-                        {p.images?.map((img, i) => (
-                          <img
-                            key={i}
-                            src={img}
-                            alt=""
-                            className="w-10 h-10 object-cover rounded border border-gray-100 shadow-sm"
-                          />
-                        ))}
-                      </div>
-                    </td>
-                    <td className="p-3 font-medium text-gray-900 border-r">{p.name}</td>
-                    <td className="p-3 capitalize border-r text-gray-600 font-medium">
-                      {typeof p.category === "object" && p.category !== null 
-                        ? p.category?.name 
-                        : (dbCategories.find(c => c._id === p.category)?.name || "Uncategorized")}
-                    </td>
-                    <td className="p-3 border-r text-gray-700 font-mono">
-                      {p.originalPrice ? <span className="line-through text-gray-400 mr-2">Rs.{p.originalPrice}</span> : null}
-                      <span className="font-bold text-green-700">Rs.{p.basePrice || "0"}</span>
-                    </td>
-                    <td className="p-3 text-xs text-gray-500 border-r">
-                      <div className="flex flex-wrap gap-1">
-                        {p.sizes?.map((s, i) => (
-                          <div key={i} className="bg-gray-100 px-2 py-1 rounded text-gray-700 font-medium border border-gray-200">
-                            <span className="font-bold text-blue-700">{s.label}:</span>{" "}
-                            {s.originalPrice ? <span className="line-through text-gray-400 mr-1">Rs.{s.originalPrice}</span> : null}
-                            <span className="text-gray-900 font-semibold">Rs.{s.price}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="p-3 text-center space-x-2 whitespace-nowrap">
-                      <button
-                        onClick={() => handleEdit(p)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded transition shadow-sm"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(p._id)}
-                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-xs rounded transition shadow-sm"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
+        {/* PRODUCT NAME */}
+        <td className="p-3 font-medium text-gray-900 border-r">{p.name}</td>
+
+        {/* CATEGORY */}
+        <td className="p-3 capitalize border-r text-gray-600 font-medium">
+          {typeof p.category === "object" && p.category !== null 
+            ? p.category?.name 
+            : (dbCategories.find(c => c._id === p.category)?.name || "Uncategorized")}
+        </td>
+
+        {/* BASE PRICING */}
+        <td className="p-3 border-r text-gray-700 font-mono">
+          {p.originalPrice ? <span className="line-through text-gray-400 mr-2">Rs.{p.originalPrice}</span> : null}
+          <span className="font-bold text-green-700">Rs.{p.basePrice || "0"}</span>
+        </td>
+
+        {/* ✅ UPDATED: SIZES & ML SETUP WITH VARIATION PHOTO */}
+        <td className="p-3 text-xs text-gray-500 border-r">
+          <div className="flex flex-col gap-1.5">
+            {p.sizes?.map((s, i) => (
+              <div 
+                key={i} 
+                className="bg-gray-100 px-2 py-1.5 rounded text-gray-700 font-medium border border-gray-200 flex items-center justify-between gap-3 max-w-xs"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold text-blue-700">{s.label}:</span>{" "}
+                  {s.originalPrice ? <span className="line-through text-gray-400 mr-1">Rs.{s.originalPrice}</span> : null}
+                  <span className="text-gray-900 font-semibold">Rs.{s.price}</span>
+                </div>
+
+                {/* Variation Image Thumbnail */}
+                <div className="w-7 h-7 bg-white border border-gray-300 rounded overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
+                  {s.images && s.images.length > 0 ? (
+                    <img 
+                      src={s.images[0]} 
+                      alt="" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : s.image ? (
+                    // Backup check agar backend single string array ke bagair bhej raha ho
+                    <img 
+                      src={s.image} 
+                      alt="" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-[8px] text-gray-400 scale-90 font-bold italic">No Img</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </td>
+
+        {/* ACTIONS BUTTONS */}
+        <td className="p-3 text-center space-x-2 whitespace-nowrap">
+          <button
+            onClick={() => handleEdit(p)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded transition shadow-sm"
+          >
+            Edit
+          </button>
+          <button
+            onClick={() => handleDelete(p._id)}
+            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-xs rounded transition shadow-sm"
+          >
+            Delete
+          </button>
+        </td>
+      </tr>
+    ))
+  )}
+</tbody>
           </table>
         </div>
       </div>
