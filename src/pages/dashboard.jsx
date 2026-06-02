@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import { Helmet, HelmetProvider } from "react-helmet-async";
 // ✅ UPDATED: Local endpoints ko secure production links se replace kar diya hai
 const BASE_URL = "https://herbal-backend-chi.vercel.app/api/products";
 const CATEGORIES_URL = "https://herbal-backend-chi.vercel.app/api/categories"; 
@@ -302,8 +302,15 @@ const handleDelete = async (id) => {
 };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-
+ <HelmetProvider>
+ 
+     <div className="p-6 bg-gray-50 min-h-screen">
+{/* ✅ ADDED: SEO Engine inject kiya jo meta tags ko real header me daalega */}
+      <Helmet>
+        <title>{form.metaTitle || "Product Dashboard | Admin"}</title>
+        <meta name="description" content={form.metaDescription || "Manage your inventory seamlessly."} />
+        <meta name="keywords" content={form.metaKeywords || "admin, dashboard, herbal"} />
+      </Helmet>
       {/* ================= HEADER ================= */}
       <div className="flex justify-between items-center mb-6 max-w-6xl mx-auto">
         <h1 className="text-xl font-bold text-gray-800">Product Dashboard</h1>
@@ -720,5 +727,6 @@ const handleDelete = async (id) => {
       </div>
 
     </div>
+    </HelmetProvider>
   );
 }
