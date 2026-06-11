@@ -16,6 +16,7 @@ export default function ProductPage() {
     originalPrice: "", // Main Product Cut Price
     basePrice: "",      // Main Product Selling Price
     description: "",
+    stock: 0,
     images: [],   
     // ⚡ UPDATED LINE: imageFile aur imageUrl add kiya
     sizes: [{ label: "", originalPrice: "", price: "", imageFile: null, imageUrl: "" }],
@@ -138,6 +139,7 @@ export default function ProductPage() {
       originalPrice: "",
       basePrice: "",
       description: "",
+      stock: 0,
       images: [],
       sizes: [{ label: "", originalPrice: "", price: "", imageFile: null, imageUrl: "" }],
       faqs: [{ question: "", answer: "" }],
@@ -159,6 +161,7 @@ export default function ProductPage() {
     formData.append("originalPrice", form.originalPrice); 
     formData.append("basePrice", form.basePrice);
     formData.append("description", form.description);
+    formData.append("stock", form.stock);
     
     formData.append("faqs", JSON.stringify(form.faqs));
     
@@ -198,8 +201,8 @@ export default function ProductPage() {
         label: s.label,
         originalPrice: s.originalPrice,
         price: s.price,
-        image: s.imageUrl 
-      };
+
+        stock: s.stock ? Number(s.stock) : 0,      };
     });
 
     formData.append("sizes", JSON.stringify(sizesCleanData));
@@ -249,7 +252,7 @@ export default function ProductPage() {
     category: selectedCategoryId, 
     originalPrice: p.originalPrice || "", 
     basePrice: p.basePrice || "",
-    description: p.description || "",
+    stock: p.stock , // Ensure stock is carried over    description: p.description || "",
     images: [],   
     // ✅ FIXED: s.images array ko map kar raha hai edit mode ke liye
     sizes: p.sizes && p.sizes.length > 0 
@@ -257,6 +260,7 @@ export default function ProductPage() {
           label: s.label || "",
           originalPrice: s.originalPrice || "",
           price: s.price || "",
+          stock: s.stock || 0, // <--- YE ADD KAREIN
           imageFile: null,      
           images: s.images || [],
           imageUrl: s.images && s.images.length > 0 ? s.images[0] : "" 
@@ -390,6 +394,10 @@ const handleDelete = async (id) => {
               </div>
             </div>
 
+
+
+
+
             {/* DESCRIPTION */}
             <div className="flex flex-col">
               <label className="text-sm font-medium mb-1 text-gray-600">Description</label>
@@ -456,7 +464,16 @@ const handleDelete = async (id) => {
                       className="border border-gray-300 p-2 text-sm rounded bg-white focus:outline-none"
                     />
                   </div>
-
+<div className="flex flex-col md:col-span-2">
+        <label className="text-xs font-semibold text-gray-500 mb-1">Stock</label>
+        <input
+          type="number"
+          value={s.stock || ""} // 's' works here
+          onChange={(e) => handleSizeChange(i, "stock", e.target.value)}
+          placeholder="0"
+          className="border border-gray-300 p-2 text-sm rounded bg-white focus:outline-none"
+        />
+      </div>
                   {/* Variation Photo Input Block */}
                   <div className="flex flex-col md:col-span-3">
                     <label className="text-xs font-semibold text-gray-500 mb-1">Variation Photo</label>
