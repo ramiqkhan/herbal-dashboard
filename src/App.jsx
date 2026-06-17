@@ -8,6 +8,7 @@ import CommentPage from "./pages/Coment";
 import CategoryPage from "./pages/CategoryPage";
 import InventorySummaryPage from "./pages/summary";
 import DealPage from "./pages/deal";
+import BlogForm from "./pages/blogs";
 
 function App() {
   // Login State Tracking
@@ -128,6 +129,11 @@ function App() {
                   💬 Comments
                 </Link>
               </li> 
+                  <li>
+                <Link to="/blogs" className="block py-2 px-3 rounded hover:bg-gray-800 transition text-sm font-medium">
+                  � Blogs
+                </Link>
+              </li> 
               <li>
                 <Link to="/categories" className="block py-2 px-3 rounded hover:bg-gray-800 transition text-sm font-medium">
                   🗂️ Categories
@@ -162,6 +168,8 @@ function App() {
             <Route path="/categories" element={<CategoryPage />} />
             <Route path="/inventory" element={<InventorySummaryPage />} />
             <Route path="/deals" element={<DealPage />} />
+            <Route path="/blogs" element={<BlogForm/>} />
+
             {/* Catch-all route to prevent blank page bugs */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
