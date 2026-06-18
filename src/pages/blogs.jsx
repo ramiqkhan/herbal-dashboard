@@ -1,13 +1,32 @@
 import React, { useState, useEffect } from 'react';
+import ReactQuill from 'react-quill-new'; // Make sure this matches your package json
+import 'react-quill-new/dist/quill.snow.css'; 
 
 const BlogForm = () => {
   const [blogs, setBlogs] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
-  const [editingId, setEditingId] = useState(null); // Track absolute document ID for Updates
+  const [editingId, setEditingId] = useState(null); 
   const [message, setMessage] = useState({ type: '', text: '' });
+
+  const modules = {
+    toolbar: [
+      [{ 'header': [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],        
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      ['link', 'video', 'clean'] // 👈 Yahan 'video' button add kar diya
+    ],
+  };
+
+  const formats = [
+    'header',
+    'bold', 'italic', 'underline', 'strike',
+    'list', 'bullet',
+    'link', 'video' // 👈 Yahan bhi 'video' format register kar diya
+  ];
   
+
   const [formData, setFormData] = useState({
     title: '',
     summary: '',
@@ -22,9 +41,6 @@ const BlogForm = () => {
   });
   const [selectedImages, setSelectedImages] = useState([]);
 
-  // ==========================================
-  // FETCH ALL BLOGS (ON COMPONENT LOAD)
-  // ==========================================
   const fetchBlogs = async () => {
     try {
       const response = await fetch('https://herbal-backend-chi.vercel.app/api/blogs/dashboard/all');
@@ -43,7 +59,6 @@ const BlogForm = () => {
     fetchBlogs();
   }, []);
 
-  // Handles standard text & checkbox state updates
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -58,7 +73,6 @@ const BlogForm = () => {
     }
   };
 
-  // Open clean drawer for creating a new post
   const handleOpenCreate = () => {
     setEditingId(null);
     setFormData({
@@ -78,9 +92,6 @@ const BlogForm = () => {
     setIsOpen(true);
   };
 
-  // ==========================================
-  // PRE-FILL FORM FOR EDIT MODE
-  // ==========================================
   const handleOpenEdit = (blog) => {
     setEditingId(blog._id);
     setFormData({
@@ -95,14 +106,11 @@ const BlogForm = () => {
       tags: Array.isArray(blog.tags) ? blog.tags.join(', ') : '',
       isActive: blog.isActive !== false
     });
-    setSelectedImages([]); // Reset images unless new ones are picked
+    setSelectedImages([]); 
     setMessage({ type: '', text: '' });
     setIsOpen(true);
   };
 
-  // ==========================================
-  // DELETE BLOG OPERATION
-  // ==========================================
   const handleDelete = async (id) => {
     if (!window.confirm("Are you completely sure you want to delete this blog post permanently?")) return;
     
@@ -121,9 +129,6 @@ const BlogForm = () => {
     }
   };
 
-  // ==========================================
-  // SUBMIT HANDLER (HANDLES BOTH POST & PUT)
-  // ==========================================
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -131,10 +136,14 @@ const BlogForm = () => {
 
     const submissionData = new FormData();
     
+    // ✅ FIXES CONTENT & BOOLEAN VALUES STRING CONVERSION BEFORE SENDING TO BACKEND
     Object.keys(formData).forEach(key => {
       if (key === 'tags') {
         const tagsArray = formData.tags.split(',').map(tag => tag.trim()).filter(Boolean);
         submissionData.append('tags', JSON.stringify(tagsArray));
+      } else if (key === 'isActive') {
+        // Form data transfers explicitly in strings, convert boolean cleanly
+        submissionData.append('isActive', formData.isActive ? 'true' : 'false');
       } else {
         submissionData.append(key, formData[key]);
       }
@@ -144,7 +153,6 @@ const BlogForm = () => {
       submissionData.append('images', file);
     });
 
-    // Dynamic routing condition based on create vs update action mapping
     const url = editingId 
       ? `https://herbal-backend-chi.vercel.app/api/blogs/${editingId}`
       : 'https://herbal-backend-chi.vercel.app/api/blogs';
@@ -168,19 +176,18 @@ const BlogForm = () => {
         text: editingId ? 'Blog article updated successfully! 📝' : 'Blog entry published successfully! 🎉' 
       });
 
-      fetchBlogs(); // Reload listing values to update dashboard grid UI view changes
+      fetchBlogs(); 
       setTimeout(() => setIsOpen(false), 1500);
     } catch (error) {
       setMessage({ type: 'error', text: error.message });
     } finally {
-      setLoading(false);
+      loading(false);
     }
   };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen font-sans">
       
-      {/* Dashboard Top Header Control bar */}
       <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Blog Management</h1>
@@ -194,9 +201,6 @@ const BlogForm = () => {
         </button>
       </div>
 
-      {/* ==========================================
-          READ INTERFACE: DATA MANAGEMENT DISPLAY TABLE
-          ========================================== */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {fetchLoading ? (
           <div className="p-12 text-center text-gray-500 font-medium animate-pulse">
@@ -268,7 +272,6 @@ const BlogForm = () => {
         )}
       </div>
 
-      {/* Slide-over Overlay Drawer Form Component */}
       {isOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex justify-end">
           <div className="bg-white w-full max-w-2xl h-full shadow-2xl p-6 overflow-y-auto flex flex-col">
@@ -338,15 +341,27 @@ const BlogForm = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">Full Article Body *</label>
-                <textarea
-                  name="content"
-                  required
-                  rows="6"
-                  value={formData.content}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg font-mono text-sm"
-                />
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-600 mb-1">
+                  Full Article Body *
+                </label>
+                
+                {/* ✅ FIX: Proper container layout styles applied for snow styling support */}
+                <div className="bg-white rounded-lg border border-gray-200 overflow-hidden custom-quill-wrapper">
+                  <ReactQuill
+                    theme="snow"
+                    value={formData.content}
+                    modules={modules}
+                    formats={formats}
+                    onChange={(contentValue) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        content: contentValue
+                      }));
+                    }}
+                    placeholder="Write your beautiful herbal article here..."
+                    className="min-h-[220px] bg-white"
+                  />
+                </div>
               </div>
 
               <div>
