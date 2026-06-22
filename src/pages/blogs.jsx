@@ -188,18 +188,25 @@ const BlogForm = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen font-sans">
       
-      <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Blog Management</h1>
-          <p className="text-sm text-gray-500">Create, view, modify, and manage your production articles layout.</p>
-        </div>
-        <button
-          onClick={handleOpenCreate}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2 shadow-sm"
-        >
-          <span className="text-xl font-light">+</span> Add New Blog
-        </button>
-      </div>
+   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 bg-white p-5 sm:p-6 rounded-xl shadow-sm border border-gray-100">
+  
+  {/* Header Info Block */}
+  <div>
+    <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Blog Management</h1>
+    <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+      Create, view, modify, and manage your production articles layout.
+    </p>
+  </div>
+  
+  {/* Responsive Action Button */}
+  <button
+    onClick={handleOpenCreate}
+    className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm cursor-pointer whitespace-nowrap text-sm sm:text-base"
+  >
+    <span className="text-xl font-light leading-none mb-0.5">+</span> Add New Blog
+  </button>
+
+</div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {fetchLoading ? (
