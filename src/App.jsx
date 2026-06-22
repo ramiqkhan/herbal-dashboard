@@ -9,6 +9,7 @@ import CategoryPage from "./pages/CategoryPage";
 import InventorySummaryPage from "./pages/summary";
 import DealPage from "./pages/deal";
 import BlogForm from "./pages/blogs";
+import AdminNavbar from "./components/Navbar";
 
 function App() {
   // Login State Tracking
@@ -95,68 +96,9 @@ function App() {
   // ✅ CONDITION 2: Agar user successfully login ho jaye, toh pura Dashboard access karne do
   return (
     <BrowserRouter>
-      <div className="flex">
         
         {/* ================= SIDEBAR ================= */}
-        <aside className="w-64 h-screen bg-gray-900 text-white p-5 flex flex-col justify-between sticky top-0">
-          <div>
-            <h1 className="text-2xl font-bold mb-6 border-b border-gray-800 pb-3">Admin Panel</h1>
-
-            {/* FIXED: Replaced standard <a href="..."> with React Router <Link to="..."> */}
-            <ul className="space-y-3">
-              <li>
-                <Link to="/" className="block py-2 px-3 rounded hover:bg-gray-800 transition text-sm font-medium">
-                  📊 Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link to="/deals" className="block py-2 px-3 rounded hover:bg-gray-800 transition text-sm font-medium">
-                  🏷️ Combo Deals
-                </Link>
-              </li>
-              <li>
-                <Link to="/orders" className="block py-2 px-3 rounded hover:bg-gray-800 transition text-sm font-medium">
-                  📦 Orders
-                </Link>
-              </li>
-              <li>
-                <Link to="/inquiries" className="block py-2 px-3 rounded hover:bg-gray-800 transition text-sm font-medium">
-                  📩 Inquiries
-                </Link>
-              </li>
-              <li>
-                <Link to="/comments" className="block py-2 px-3 rounded hover:bg-gray-800 transition text-sm font-medium">
-                  💬 Comments
-                </Link>
-              </li> 
-                  <li>
-                <Link to="/blogs" className="block py-2 px-3 rounded hover:bg-gray-800 transition text-sm font-medium">
-                  � Blogs
-                </Link>
-              </li> 
-              <li>
-                <Link to="/categories" className="block py-2 px-3 rounded hover:bg-gray-800 transition text-sm font-medium">
-                  🗂️ Categories
-                </Link>
-              </li> 
-              <li>
-                <Link to="/inventory" className="block py-2 px-3 rounded hover:bg-gray-800 transition text-sm font-medium">
-                  📦 Inventory
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Logout Action Area */}
-          <div className="border-t border-gray-800 pt-4">
-            <button
-              onClick={handleLogout}
-              className="w-full bg-red-600/10 hover:bg-red-600 border border-red-600/20 text-red-400 hover:text-white py-2.5 rounded-lg text-xs font-bold transition shadow-sm cursor-pointer tracking-wider uppercase"
-            >
-              Logout Account 🚪
-            </button>
-          </div>
-        </aside>
+        <AdminNavbar handleLogout={handleLogout} />
 
         {/* ================= MAIN CONTENT ================= */}
         <main className="flex-1 p-6 bg-gray-100 min-h-screen overflow-y-auto">
@@ -175,7 +117,7 @@ function App() {
           </Routes>
         </main>
 
-      </div>
+      
     </BrowserRouter>
   );
 }
