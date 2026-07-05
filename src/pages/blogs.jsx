@@ -181,7 +181,7 @@ const BlogForm = () => {
     } catch (error) {
       setMessage({ type: 'error', text: error.message });
     } finally {
-      loading(false);
+      setLoading(false);
     }
   };
 
